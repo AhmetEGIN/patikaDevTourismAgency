@@ -35,7 +35,6 @@ public class HostelType {
 	private int id;
 
 	@Column(name = "name")
-	@NotNull
 	private String name;
 
 	@ManyToMany(mappedBy = "hostelTypes", fetch = FetchType.LAZY)

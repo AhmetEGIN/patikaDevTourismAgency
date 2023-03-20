@@ -28,12 +28,9 @@ public class User {
 	@Column(name = "id")
 	private int id;
 	
-	@Email
 	@Column(name = "email")
 	private String email;
-	
-	@NotNull
-	@NotEmpty
+
 	@Column(name = "password")
 	private String password;
 	

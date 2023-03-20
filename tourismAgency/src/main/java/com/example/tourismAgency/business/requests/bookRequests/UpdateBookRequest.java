@@ -2,6 +2,7 @@ package com.example.tourismAgency.business.requests.bookRequests;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,8 +14,10 @@ public class UpdateBookRequest {
 
 	private int id;
 
+	@Min(value = 0)
 	private int numberOfAdult;
 
+	@Min(value = 0)
 	private int numberOfChild;
 
 	private int price;

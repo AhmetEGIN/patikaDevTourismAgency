@@ -21,7 +21,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -47,8 +46,6 @@ public class Hotel extends User{
 	private int id;
 
 	@Column(name = "name")
-	@NotNull
-	@NotBlank
 	private String name;
 
 	@Column(name = "address")
@@ -59,8 +56,6 @@ public class Hotel extends User{
 	private String phoneNumber;
 
 	@Column(name = "star")
-	@Min(value = 1)
-	@Max(value = 5)
 	private int star;
 
 	@Column(name = "created_date")

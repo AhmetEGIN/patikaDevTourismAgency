@@ -3,7 +3,6 @@ package com.example.tourismAgency.business.abstracts;
 import java.util.List;
 
 import com.example.tourismAgency.business.requests.bookRequests.CreateBookRequest;
-import com.example.tourismAgency.business.requests.bookRequests.UpdateBookRequest;
 import com.example.tourismAgency.business.responses.bookResponses.GetAllBookResponse;
 import com.example.tourismAgency.business.responses.bookResponses.GetBookResponse;
 import com.example.tourismAgency.core.utilities.results.DataResult;

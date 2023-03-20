@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GetRoomResponse {
-//	private GetHotelResponse hotelResponse;
+	
+	private String hotelName;
 
 	private int numberOfRooms;
 	

@@ -29,11 +29,9 @@ public class Book {
 	private int id;
 	
 	@Column(name = "number_of_adult")
-	@Min(value = 0)
 	private int numberOfAdult;
 	
 	@Column(name = "number_of_child")
-	@Min(value = 0)
 	private int numberOfChild;
 	
 	@Column(name = "start_date")

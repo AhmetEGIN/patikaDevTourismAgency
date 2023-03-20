@@ -25,13 +25,11 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = false)
 public class Customer extends User {
 
-	@NotNull
-	@NotEmpty
+
 	@Column(name = "first_name")
 	private String firstName;
 
-	@NotNull
-	@NotEmpty
+
 	@Column(name = "last_name")
 	private String lastName;
 

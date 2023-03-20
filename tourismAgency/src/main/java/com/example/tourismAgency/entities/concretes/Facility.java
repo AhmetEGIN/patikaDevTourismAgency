@@ -35,7 +35,6 @@ public class Facility {
 	private int id;
 	
 	@Column(name = "name")
-	@NotNull
 	private String name;
 	
 	@ManyToMany(mappedBy = "facilities", fetch = FetchType.LAZY)

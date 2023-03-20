@@ -1,12 +1,9 @@
 package com.example.tourismAgency.business.concretes;
 
-import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Persistable;
 import org.springframework.stereotype.Service;
 
 import com.example.tourismAgency.business.abstracts.BookService;
@@ -17,42 +14,34 @@ import com.example.tourismAgency.business.requests.bookRequests.CreateBookReques
 import com.example.tourismAgency.business.responses.bookResponses.GetAllBookResponse;
 import com.example.tourismAgency.business.responses.bookResponses.GetBookResponse;
 import com.example.tourismAgency.business.responses.roomResponses.GetRoomResponse;
+import com.example.tourismAgency.business.rules.BookBusinessRules;
 import com.example.tourismAgency.config.mapper.MapperService;
-import com.example.tourismAgency.core.utilities.business.BusinessRules;
 import com.example.tourismAgency.core.utilities.results.DataResult;
 import com.example.tourismAgency.core.utilities.results.ErrorDataResult;
-import com.example.tourismAgency.core.utilities.results.ErrorResult;
 import com.example.tourismAgency.core.utilities.results.Result;
 import com.example.tourismAgency.core.utilities.results.SuccessDataResult;
 import com.example.tourismAgency.core.utilities.results.SuccessResult;
 import com.example.tourismAgency.dataAccess.abstracts.BookRepository;
 import com.example.tourismAgency.entities.concretes.Book;
 
+import lombok.AllArgsConstructor;
+
 @Service
+@AllArgsConstructor
 public class BookManager implements BookService {
 
+	private BookBusinessRules bookBusinessRules;
 	private BookRepository bookRepository;
 	private MapperService mapperService;
 	private RoomService roomService;
 
-	@Autowired
-	public BookManager(BookRepository bookRepository, MapperService mapperService, RoomService roomService) {
-		this.bookRepository = bookRepository;
-		this.mapperService = mapperService;
-		this.roomService = roomService;
-	}
-
 	@Override
 	public Result add(CreateBookRequest bookRequest) {
-		Result response = BusinessRules.run(
-				checkRoomAvailable(bookRequest.getRoomId(), bookRequest.getStartDate(), bookRequest.getEndDate()),
-				checkDateBeforeNow(bookRequest.getStartDate(), bookRequest.getEndDate()),
-				checkIfTheNumberOfBedsSufficient(bookRequest.getRoomId(),
-						(bookRequest.getNumberOfAdult() + bookRequest.getNumberOfChild())));
 
-		if (response != null) {
-			return new ErrorResult(response.getMessage());
-		}
+		bookBusinessRules.checkDateBeforeNow(bookRequest.getStartDate(), bookRequest.getEndDate());
+		bookBusinessRules.checkRoomAvailable(bookRequest.getRoomId(), bookRequest.getStartDate(), bookRequest.getEndDate());
+		bookBusinessRules.checkIfTheNumberOfBedsSufficient(bookRequest.getRoomId(),(bookRequest.getNumberOfAdult() + bookRequest.getNumberOfChild()));
+
 		Book book = this.mapperService.forRequest().map(bookRequest, Book.class);
 		book.setPrice(this.getPrice(bookRequest).getData());
 		this.bookRepository.save(book);
@@ -111,18 +100,19 @@ public class BookManager implements BookService {
 					+ dayRangeInSecondSeaseon * bookRequest.getNumberOfChild() * room.getPriceSecondPeriodForChild();
 			return new SuccessDataResult<Integer>(price);
 
-		}else if(bookRequest.getStartDate().isAfter(Season.beginnigOfSecondPeriod)
+		} else if (bookRequest.getStartDate().isAfter(Season.beginnigOfSecondPeriod)
 				&& bookRequest.getStartDate().isBefore(Season.endOfSecondPeriod)
 				&& bookRequest.getEndDate().isAfter(Season.beginnigOfFirstPeriod)) {
-			int dayRangeInFirstSeason = Period.between(Season.beginnigOfFirstPeriod, bookRequest.getEndDate()).getDays() + 1;
-			int dayRangeInSecondSeason = Period.between(bookRequest.getStartDate(), Season.endOfSecondPeriod).getDays() + 1;
+			int dayRangeInFirstSeason = Period.between(Season.beginnigOfFirstPeriod, bookRequest.getEndDate()).getDays()
+					+ 1;
+			int dayRangeInSecondSeason = Period.between(bookRequest.getStartDate(), Season.endOfSecondPeriod).getDays()
+					+ 1;
 			int price = dayRangeInFirstSeason * bookRequest.getNumberOfAdult() * room.getPriceFirstPeriodForAdult()
 					+ dayRangeInFirstSeason * bookRequest.getNumberOfChild() * room.getPriceFirstPeriodForChild()
 					+ dayRangeInSecondSeason * bookRequest.getNumberOfAdult() * room.getPriceSecondPeriodForAdult()
 					+ dayRangeInSecondSeason * bookRequest.getNumberOfChild() * room.getPriceSecondPeriodForChild();
 			return new SuccessDataResult<Integer>(price);
 		}
-			
 
 		return new ErrorDataResult<Integer>("Etwas schiefgeht");
 	}
@@ -144,42 +134,9 @@ public class BookManager implements BookService {
 
 	// private codes
 
-	private Result checkDateBeforeNow(LocalDate startDate, LocalDate endDate) {
-		if (startDate.isBefore(LocalDate.now()) || endDate.isBefore(LocalDate.now())) {
-			return new ErrorResult(Message.BookMessages.CHECK_DATE);
-		}
-		return new SuccessResult();
-
-	}
-
-	private Result checkRoomAvailable(int roomId, LocalDate startDate, LocalDate endDate) {
-		Book book = this.getActiveBookByRoomId(roomId).getData();
-		if (book == null) {
-			return new SuccessResult();
-		}
-		if ((startDate.isAfter(book.getEndDate()) && endDate.isAfter(book.getEndDate()))
-				|| (startDate.isBefore(book.getStartDate()) && endDate.isBefore(book.getStartDate()))) {
-			return new SuccessResult();
-		}
-
-		return new ErrorResult(Message.BookMessages.ROOM_IS_ALREADY_BOOKED_IN_SELECTED_DATE_RANGE);
-	}
-
 	private DataResult<GetRoomResponse> getRoomById(int id) {
+
 		return this.roomService.getRoomById(id);
-	}
-
-	private DataResult<Book> getActiveBookByRoomId(int roomId) {
-
-		return new SuccessDataResult<Book>(this.bookRepository.getByRoomIdAndIsActive(roomId, true));
-	}
-
-	private Result checkIfTheNumberOfBedsSufficient(int roomId, int numberOfGuest) {
-		GetRoomResponse room = this.roomService.getRoomById(roomId).getData();
-		if (numberOfGuest > room.getNumberOfBeds()) {
-			return new ErrorResult(Message.BookMessages.NUMBER_OF_BEDS_NOT_SUFFICIENT);
-		}
-		return new SuccessResult();
 	}
 
 }

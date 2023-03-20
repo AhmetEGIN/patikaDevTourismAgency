@@ -7,7 +7,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -23,10 +22,9 @@ import com.example.tourismAgency.business.requests.hotelRequests.UpdateHotelRequ
 import com.example.tourismAgency.business.responses.facilityResponses.GetAllFacilityResponse;
 import com.example.tourismAgency.business.responses.hotelResponses.GetAllHotelResponse;
 import com.example.tourismAgency.business.responses.roomResponses.GetRoomResponse;
+import com.example.tourismAgency.business.rules.HotelBusinessRules;
 import com.example.tourismAgency.config.mapper.MapperService;
-import com.example.tourismAgency.core.utilities.business.BusinessRules;
 import com.example.tourismAgency.core.utilities.results.DataResult;
-import com.example.tourismAgency.core.utilities.results.ErrorResult;
 import com.example.tourismAgency.core.utilities.results.Result;
 import com.example.tourismAgency.core.utilities.results.SuccessDataResult;
 import com.example.tourismAgency.core.utilities.results.SuccessResult;
@@ -35,7 +33,10 @@ import com.example.tourismAgency.entities.concretes.Facility;
 import com.example.tourismAgency.entities.concretes.HostelType;
 import com.example.tourismAgency.entities.concretes.Hotel;
 
+import lombok.AllArgsConstructor;
+
 @Service
+@AllArgsConstructor
 public class HotelManager implements HotelService {
 
 	private HotelRepository hotelRepository;
@@ -43,25 +44,13 @@ public class HotelManager implements HotelService {
 	private FacilityService facilityService;
 	private HostelTypeService hostelTypeService;
 	private RoomService roomService;
-
-	@Autowired
-	public HotelManager(HotelRepository hotelRepository, MapperService mapperService, FacilityService facilityService,
-			HostelTypeService hostelTypeService, RoomService roomService) {
-		this.hotelRepository = hotelRepository;
-		this.mapperService = mapperService;
-		this.facilityService = facilityService;
-		this.hostelTypeService = hostelTypeService;
-		this.roomService = roomService;
-	}
+	private HotelBusinessRules hotelBusinessRules;
 
 	@Override
 	public Result add(CreateHotelRequest hotelRequest) {
-		Result response = BusinessRules.run(existsHotelByName(hotelRequest.getName()),
-				existsHotelByEmail(hotelRequest.getEmail()));
 
-		if (response != null) {
-			return response;
-		}
+		hotelBusinessRules.existsHotelByEmail(hotelRequest.getEmail());
+		hotelBusinessRules.existsHotelByName(hotelRequest.getName());
 
 		Hotel hotel = this.mapperService.forRequest().map(hotelRequest, Hotel.class);
 		hotel.setId(0);
@@ -74,10 +63,9 @@ public class HotelManager implements HotelService {
 
 	@Override
 	public Result update(UpdateHotelRequest hotelRequest) {
-		Result response = BusinessRules.run(checkIfIdExists(hotelRequest.getId()));
-		if (response != null) {
-			return response;
-		}
+		
+		hotelBusinessRules.checkIfIdExists(hotelRequest.getId());
+		
 		Hotel hotel = this.mapperService.forRequest().map(hotelRequest, Hotel.class);
 		hotel.setAddress(hotelRequest.getAddress());
 		hotel.setEmail(hotelRequest.getEmail());
@@ -143,7 +131,7 @@ public class HotelManager implements HotelService {
 		Hotel hotel = this.hotelRepository.getReferenceById(id);
 		hotel.setActive(isActive);
 		this.hotelRepository.save(hotel);
-		
+
 		return new SuccessResult(Message.HotelMessages.IS_ACTIVE_CHANGED);
 	}
 
@@ -197,7 +185,7 @@ public class HotelManager implements HotelService {
 
 		return new SuccessDataResult<List<GetAllHotelResponse>>(hotelResponses, Message.GlobalMessages.DATA_LISTED);
 	}
-	
+
 	// private codes
 
 	private void setFacilities(Hotel hotel, List<Integer> ids) {
@@ -224,20 +212,5 @@ public class HotelManager implements HotelService {
 		hotel.setHostelTypes(hostelTypes);
 	}
 
-	private Result existsHotelByName(String name) {
-		return (this.hotelRepository.existsHotelByNameContainingIgnoreCase(name))
-				? new ErrorResult(Message.HotelMessages.HOTEL_ALREADY_EXISTS)
-				: new SuccessResult();
-	}
 
-	private Result existsHotelByEmail(String email) {
-		return (this.hotelRepository.existsHotelByEmailEquals(email))
-				? new ErrorResult(Message.HotelMessages.EMAIL_ALREADY_EXISTS)
-				: new SuccessResult();
-	}
-
-	private Result checkIfIdExists(int id) {
-		return (this.hotelRepository.existsById(id)) ? new SuccessResult()
-				: new ErrorResult(Message.HotelMessages.HOTEL_NOT_FOUND);
-	}
 }

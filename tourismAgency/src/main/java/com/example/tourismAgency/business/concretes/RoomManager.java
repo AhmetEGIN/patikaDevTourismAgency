@@ -1,5 +1,6 @@
 package com.example.tourismAgency.business.concretes;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -24,16 +25,14 @@ import com.example.tourismAgency.core.utilities.results.SuccessResult;
 import com.example.tourismAgency.dataAccess.abstracts.RoomRepository;
 import com.example.tourismAgency.entities.concretes.Room;
 
+import lombok.AllArgsConstructor;
+
 @Service
+@AllArgsConstructor
 public class RoomManager implements RoomService {
 
 	private RoomRepository roomRepository;
 	private MapperService mapperService;
-
-	public RoomManager(RoomRepository roomRepository, MapperService mapperService) {
-		this.roomRepository = roomRepository;
-		this.mapperService = mapperService;
-	}
 
 	@Override
 	public Result add(CreateRoomRequest roomRequest) {
@@ -41,7 +40,7 @@ public class RoomManager implements RoomService {
 		room.setId(0);
 		for (int i = 0; i < roomRequest.getNumberOfRooms(); i++) {
 			this.roomRepository.save(room);
-			
+
 		}
 		return new SuccessResult(Message.GlobalMessages.DATA_ADDED);
 	}
@@ -88,7 +87,7 @@ public class RoomManager implements RoomService {
 	}
 
 	@Override
-	public DataResult<List<GetAllRoomResponse>> getAllFilteredByCityAndHotelAndDate(int cityId , int hotelId ) {
+	public DataResult<List<GetAllRoomResponse>> getAllFilteredByCityAndHotelAndDate(int cityId, int hotelId) {
 		Predicate<GetAllRoomResponse> cityCondition = cityId != 0
 				? (room -> room.getHotelResponse().getCity().getId() == cityId)
 				: (room -> room.getHotelResponse().getCity().getId() > 0);
@@ -96,6 +95,8 @@ public class RoomManager implements RoomService {
 				? (room -> room.getHotelResponse().getId() == hotelId)
 				: (room -> room.getHotelResponse().getId() > 0);
 //		Predicate<Room> dateCondition = (startDate != null && endDate != null)
+//		Predicate<GetAllRoomResponse> dateCondition = (startDate != null && endDate != null)
+		
 
 		Stream<GetAllRoomResponse> stream = this.getAll().getData().stream();
 		List<GetAllRoomResponse> roomResponses = stream.filter(cityCondition).filter(hotelCondition)
@@ -128,7 +129,7 @@ public class RoomManager implements RoomService {
 		this.roomRepository.save(room);
 		return new SuccessResult(Message.RoomMessages.BOOKED_STATUS_CHANGED);
 	}
-	
+
 	// private codes
 
 	private void updateRoom(Room room, UpdateRoomRequest roomRequest) {
@@ -142,7 +143,5 @@ public class RoomManager implements RoomService {
 		room.setPriceSecondPeriodForChild(roomRequest.getPriceSecondPeriodForChild());
 
 	}
-
-
 
 }
